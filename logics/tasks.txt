@@ -1,0 +1,8 @@
+﻿--Add index.html anti duplicator
+--Links validator
+
+OK Links regex
+--Download Percent
+
+OK https
+OK Recognize url("") in css embeded in tags

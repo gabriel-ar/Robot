@@ -1,0 +1,64 @@
+______________________________________________________________
+
+Detectar relacion de una url con otra
+______________________________________________________________
+
+
+--------------------------------------------------------------
+PADRE MAYOR
+--------------------------------------------------------------
+
+home/casa/haus/of/gaga/
+home/casa/
+
+down
+
+home/casa/haus/of/gaga/
+home/dog/
+
+down diff
+
+home/find/haus/of/gaga/
+home/casa/
+
+down diff
+
+--------------------------------------------------------------
+PADRE MENOR
+--------------------------------------------------------------
+
+home/casa/
+home/casa/haus/of/gaga/
+
+up
+
+home/dog/
+home/casa/haus/of/gaga/
+
+up diff
+
+home/casa/
+home/find/haus/of/gaga/
+
+up
+
+--------------------------------------------------------------
+IGUALES
+--------------------------------------------------------------
+
+home/casa/haus/de/perro/
+home/casa/haus/of/gaga/
+
+5 ramas - 2 iguales : down
+
+home/dog/
+home/casa/haus/of/gaga/
+
+5 ramas - 2 iguales : down
+
+home/casa/
+home/find/haus/of/gaga/
+
+5 ramas - 2 iguales : down
+
+

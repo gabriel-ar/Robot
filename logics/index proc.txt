@@ -1,0 +1,16 @@
+﻿
+Index, Default, Home
+--------------------->
+
+--Lista de correspondecia entre archivos index y directorios
+    La Lista contiene de directorios que han sido vinculados con
+    archivos index
+
+    Si es directorio se compara con la lista de directorios resueltos
+        -Si no existe se crea como archivo index.html
+        -Si existe no se descarga
+
+    Si el archivo se llama index, default o home comparar con la 
+    pagina de el directoro descargado, si no hay se crea el archivo
+
+

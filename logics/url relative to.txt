@@ -1,0 +1,63 @@
+______________________________________________________________
+
+**Hacer rutas relativas para ir de origen a destino**
+______________________________________________________________
+
+org_url = ORIGEN
+org_url.RelativeTo(DESTINO)
+
+
+***
+se va analizando desde el principio, las iguales no se colocan
+si se acaba origen se completa con DESTINO
+----------------------------------------------
+
+ORIGEN  http://google.com/home/
+                            0    1
+DESTINO http://google.com/home/mail/
+
+RELATIVA mail/
+
+
+***
+se va analizando desde el principio, las iguales no se colocan
+cuando se topa con el primer diferente coloca ../ por todos los que resten de ORIGEN
+luego completa con la ruta que falte de DESTINO.
+----------------------------------------------
+
+ORIGEN  http://google.com/casa/haus/dog/
+							0    1    2
+DESTINO http://google.com/casa/home/mail/
+
+RELATIVA ../../home/mail/
+
+
+***
+se va analizando desde el principio, las iguales no se colocan
+cuando se topa con el primer diferente se coloca ../ por todos los que resten de  ORIGEN
+----------------------------------------------
+
+ORIGEN  http://google.com/home/mail/perro/viejo/
+
+DESTINO http://google.com/home/mail/hause/
+
+RELATIVA ../../hause
+
+
+***
+se va analizando desde el principio, las iguales no se colocan
+si se acaba DESTINO se completa con las que resten de ORIGEN con ../
+
+----------------------------------------------
+ORIGEN  http://google.com/home/mail/perro/viejo/sato/
+
+DESTINO http://google.com/home/mail/
+
+
+
+ORIGEN  http://hola.com/home/mail/
+
+DESTINO http://google.com/home/mail/
+
+../../../google.com/home/mail/
+
