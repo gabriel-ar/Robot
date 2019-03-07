@@ -25,6 +25,7 @@ namespace Robot {
         DataContractJsonSerializer json;
         MainData data;
 
+
         Controller controller;
         Thread contr_trd;
 
@@ -48,6 +49,7 @@ namespace Robot {
                 data = new MainData();
                 data.SetUp();
                 SaveData();
+                
                 }
 
             InitializeComponent();
@@ -84,7 +86,17 @@ namespace Robot {
 
         private void StartScan(object sender, EventArgs e) {
 
-            if(data.status == State.Iddle) {
+            //Check if FS location is available
+            if(data.SaveFolder == "" || !Directory.Exists(data.SaveFolder))
+            {
+                MessageBox.Show("El directorio de salida de archivos no está disponible, selecciona otro.");
+                BrowseSaveFolder(null, null);
+                return;
+            }
+
+
+            //Start Process
+            if(data.Status == State.Iddle) {
 
                 contr_trd = new Thread(new ThreadStart(StartController));
                 contr_trd.Start();
@@ -92,12 +104,12 @@ namespace Robot {
                 btn_scan.Enabled = false;
                 btn_scan.Text = "Iniciando";
 
-                } else if(data.status == State.Working) {
+                } else if(data.Status == State.Working) {
                 btn_scan.Text = "Pausando";
                 btn_scan.Enabled = false;
                 controller.Pause();
 
-                } else if(data.status == State.Paused) {
+                } else if(data.Status == State.Paused) {
                 controller.Restart();
                 }
             }
@@ -174,7 +186,8 @@ namespace Robot {
             btn_scan.Enabled = data.org_links.Count > 0;
 
             cb_nav.SelectedIndex = (int) data.nav_direction;
-            }
+
+        }
 
         //Address & Nav
         private void AddrChanged(object sender, EventArgs e) {
@@ -314,9 +327,10 @@ namespace Robot {
 
         //Save
         private void BrowseSaveFolder(object sender, EventArgs e) {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
-            fbd.Description = "Selecciona la carperta de salida";
-            fbd.SelectedPath = data.save_folder;
+            FolderBrowserDialog fbd = new FolderBrowserDialog {
+                Description = "Selecciona la carperta de salida",
+                SelectedPath = data.save_folder
+            };
 
             DialogResult dr = fbd.ShowDialog();
 
@@ -332,7 +346,15 @@ namespace Robot {
             }
 
         private void OpenFS(object sender, EventArgs e) {
-            System.Diagnostics.Process.Start(data.save_folder);
+
+            try
+            {
+                System.Diagnostics.Process.Start(data.save_folder);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("La ubicación seleccionada no existe.");
+            }
             }
 
         #endregion
@@ -355,7 +377,7 @@ namespace Robot {
                 if(data_timer != null)
                     data_timer.Dispose();
 
-                if(controller != null && data.status != State.Iddle)
+                if(controller != null && data.Status != State.Iddle)
                     controller.ForceClose();
 
                 }
@@ -365,7 +387,7 @@ namespace Robot {
 
         private void OnClosing(object sender, FormClosingEventArgs e) {
 
-            if(data.status != State.Iddle) {
+            if(data.Status != State.Iddle) {
                 DialogResult dr = MessageBox.Show("Deseas cerrar la aplicacion sin terminar las transferencias?", "Transferencia en curso", MessageBoxButtons.YesNo);
 
                 if(dr == DialogResult.No) {

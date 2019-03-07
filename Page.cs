@@ -48,8 +48,9 @@ namespace Robot {
             //TODO Get request configs by preferences
             data.Log("--->PAGE Iniciando: " + org_url.str);
 
-            WebHeaderCollection headers = new WebHeaderCollection();
-            headers.Add(HttpRequestHeader.AcceptLanguage, data.accept_lang);
+            WebHeaderCollection headers = new WebHeaderCollection {
+                { HttpRequestHeader.AcceptLanguage, data.accept_lang }
+            };
 
             HttpWebRequest request = WebRequest.CreateHttp(org_url.str);
             request.Headers = headers;
@@ -90,7 +91,7 @@ namespace Robot {
 
             switch(status.url_status) {
                 case UrlStatus.Iprg:
-                case UrlStatus.Todo:
+                case UrlStatus.ToDo:
                 case UrlStatus.Saved:
                     ok_exists:
                     response.Close();
@@ -107,7 +108,7 @@ namespace Robot {
 
                 case UrlStatus.Free:
                     lock (data)
-                        if(!data.LinkStatus(this, UrlStatus.Iprg))
+                        if(!data.UpdateStatus(this, UrlStatus.Iprg))
                             goto ok_exists;
 
                     str_resp = new StreamReader(response.GetResponseStream()).ReadToEnd();

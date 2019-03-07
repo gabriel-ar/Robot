@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Robot {
 
+    //Controls and coordinates all the activity
     class Controller {
 
         public MainData data;
@@ -26,7 +27,7 @@ namespace Robot {
             data.Log("->Inicializando Vinculos Originales");
 
             InitializeWorkers();
-            data.status = State.Working;
+            data.Status = State.Working;
 
             int fcount = 0;
             for(int c = 0; c < data.org_links.Count; c++) {
@@ -36,10 +37,10 @@ namespace Robot {
                     page.Proccess();
 
                     if(page.result.HasFlag(Result.Fail)) {
-                        data.LinkStatus(page, UrlStatus.Failed);
+                        data.UpdateStatus(page, UrlStatus.Failed);
                         fcount++;
                         } else {
-                        data.LinkStatus(page, UrlStatus.Todo);
+                        data.UpdateStatus(page, UrlStatus.ToDo);
                         }
 
                     } catch(Exception) {
@@ -49,7 +50,7 @@ namespace Robot {
 
             if(fcount == data.org_links.Count) {
                 Thread.Sleep(1000);
-                data.status = State.Iddle;
+                data.Status = State.Iddle;
                 }
 
             }
@@ -81,7 +82,7 @@ namespace Robot {
             }
 
         public void Pause() {
-            data.status = State.Pausing;
+            data.Status = State.Pausing;
             Checker();
             foreach(WorkerThread worker in data.workers) {
                 worker.Pause();
@@ -96,19 +97,19 @@ namespace Robot {
         void Check(object obj) {
 
             //Check Paused
-            if(data.status == State.Pausing) {
+            if(data.Status == State.Pausing) {
                 List<WorkerThread> sw_worker = data.workers;
                 foreach(WorkerThread worker in sw_worker) {
                     if(worker.state != State.Paused)
                         return;
                     }
 
-                data.status = State.Paused;
+                data.Status = State.Paused;
                 tmr_check.Dispose();
                 tmr_check = null;
 
                 //Check Idle
-                } else if(data.status == State.Working) {
+                } else if(data.Status == State.Working) {
 
                 List<WorkerThread> sw_worker = data.workers;
                 foreach(WorkerThread worker in sw_worker) {
@@ -123,7 +124,7 @@ namespace Robot {
 
                 File.WriteAllText("D:\\result.txt", result);
 
-                data.status = State.Iddle;
+                data.Status = State.Iddle;
                 tmr_check.Dispose();
                 tmr_check = null;
 
@@ -138,7 +139,7 @@ namespace Robot {
         public void Restart() {
             foreach(WorkerThread worker in data.workers) {
                 worker.Resume();
-                data.status = State.Working;
+                data.Status = State.Working;
                 Checker();
                 }
             }

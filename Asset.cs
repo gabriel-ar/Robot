@@ -59,7 +59,7 @@ namespace Robot {
                     return Result.Fail | Result.Exists;
 
                 case UrlStatus.Free:
-                    data.AssetStatus(this, UrlStatus.Iprg);
+                    data.UpdateStatus(this, UrlStatus.Iprg);
 
                     if(!MakeFullPath())
                         return Result.Exists;

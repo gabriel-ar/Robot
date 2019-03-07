@@ -9,6 +9,9 @@ using System.ComponentModel;
 
 namespace Robot {
 
+    /// <summary>
+    /// Describes the state of the whole process
+    /// </summary>
     enum State {
         Iddle,
         Paused,
@@ -17,6 +20,9 @@ namespace Robot {
         NoWork
         }
 
+    /// <summary>
+    /// Describes the movement of the spider betwen the directories of the URL
+    /// </summary>
     enum NavDirection {
         In,
         Out,
@@ -24,12 +30,37 @@ namespace Robot {
         Static
         }
 
+    /// <summary>
+    /// Describes the status of a file, prevents duplication, and low efficiency.
+    /// </summary>
     enum UrlStatus {
-        Todo,   //Se llama a PageProc
-        Iprg,   //No existe y se comienza a descargar
+        /// <summary>
+        /// The link doesn't apear in any list
+        /// </summary>
+        Free,    //Ninguno de los anteriores
+
+        /// <summary>
+        /// This link has been detected in another page, doesn't exist in any list and now is downloading.
+        /// </summary>
+        Iprg,
+
+        /// <summary>
+        /// The HTML Page has been downloaded, is in the <see cref="MainData.links_todo"/> list,
+        /// the links that contains will be scanned, and downloaded if new.
+        /// </summary>
+        ToDo,   //Se llama a PageProc
+
+        /// <summary>
+        /// This page has been definitely saved in the hard drive,
+        /// and all the new links on it has been downloaded, and repaced with the final path.
+        /// </summary>
         Saved,  //Termino en PageProc
-        Failed, //Fallo
-        Free    //Ninguno de los anteriores
+
+        /// <summary>
+        /// This URL has been failed to download, the program is not trying to process them again.
+        /// </summary>
+        Failed
+
         }
 
     [Flags]
@@ -51,6 +82,9 @@ namespace Robot {
         other
         }
 
+    /// <summary>
+    /// Status of an specific file
+    /// </summary>
     struct StatusReport {
         public UrlStatus url_status;
         public Page page;
@@ -58,6 +92,9 @@ namespace Robot {
         public int index;
         }
 
+    /// <summary>
+    /// Holds the data used to add an increment at the end of a file tha has the same name that another.
+    /// </summary>
     class IncrementCount {
 
         public IncrementCount(string path) {
@@ -68,6 +105,10 @@ namespace Robot {
         public int increment = 1;
         }
 
+    
+    /// <summary>
+    /// Data Hub for the whole app. Works through Data Contract JSON Serializer (the data is saved to a .json file)
+    /// </summary>
     [DataContract]
     class MainData {
 
@@ -145,6 +186,9 @@ namespace Robot {
             file_incr = new List<IncrementCount>();
             }
 
+        /// <summary>
+        /// Fills all fields with the default data.
+        /// </summary>
         public void SetUp() {
             org_links = new List<string>();
             nav_direction = NavDirection.In;
@@ -163,7 +207,8 @@ namespace Robot {
             user_agent = "Robot";
             accept_lang = "en,es*";
 
-            save_folder = "D:\\robot\\";
+            //Make this smart!!
+            save_folder = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)+"Robot Saved Sites/";
             fs_retry = 10;
             }
 
@@ -177,6 +222,13 @@ namespace Robot {
 
         #region Links Management
 
+        /// <summary>
+        /// Checks if two urls are equal, 
+        /// one contained in an <see cref="Page"/> and the other in an <see cref="URL"/>
+        /// </summary>
+        /// <param name="asset">Asset class containing a url </param>
+        /// <param name="url">URL class</param>
+        /// <returns>True if both URLs are equal</returns>
         bool LinksCoincidence(Page page, URL url) {
 
             URL.AbsURL org_url = page.org_url.url_main;
@@ -202,12 +254,18 @@ namespace Robot {
             return one == two;
             }
 
+        /// <summary>
+        /// Helper private method for <see cref="CheckLink(URL)"/> and <see cref="UpdateStatus(Page, UrlStatus)"/>.
+        /// Checks for coincidences in the lists: iprg, saved, and failed.
+        /// </summary>
+        /// <param name="url">The URL tha has to be checked against the four lists</param>
+        /// <returns><see cref="StatusReport"/> object</returns>
         StatusReport IntrCheckLink(URL url) {
             StatusReport report = new StatusReport();
 
             foreach(Page page in links_todo) {
                 if(LinksCoincidence(page, url)) {
-                    report.url_status = UrlStatus.Todo;
+                    report.url_status = UrlStatus.ToDo;
                     report.page = page;
                     report.index = links_todo.IndexOf(page);
                     return report;
@@ -246,6 +304,11 @@ namespace Robot {
             return report;
             }
 
+        /// <summary>
+        /// Apropiate call for <see cref="IntrCheckAsset(URL)"/>
+        /// </summary>
+        /// <param name="url">URL of the Page to be checked</param>
+        /// <returns><see cref="StatusReport"/> object, wich contains information abaut the status.</returns>
         public StatusReport CheckLink(URL url) {
             StatusReport report;
             Block();
@@ -254,7 +317,13 @@ namespace Robot {
             return report;
             }
 
-        public bool LinkStatus(Page page, UrlStatus new_status) {
+        /// <summary>
+        /// Updates the status of an Page, moving it from one list to another.
+        /// </summary>
+        /// <param name="page">Page to be updated</param>
+        /// <param name="new_status">New status to be assigned</param>
+        /// <returns>False if the Page already has the new status. True if new status assigned.</returns>
+        public bool UpdateStatus(Page page, UrlStatus new_status) {
             StatusReport report;
             Block();
 
@@ -274,7 +343,7 @@ namespace Robot {
                 }
 
             switch(report.url_status) {
-                case UrlStatus.Todo:
+                case UrlStatus.ToDo:
                     links_todo.RemoveAt(report.index);
                     break;
                 case UrlStatus.Iprg:
@@ -289,7 +358,7 @@ namespace Robot {
                 }
 
             switch(new_status) {
-                case UrlStatus.Todo:
+                case UrlStatus.ToDo:
                     links_todo.Add(page);
                     NewWork.Invoke(page);
                     break;
@@ -307,10 +376,27 @@ namespace Robot {
             return true;
             }
 
+        /// <summary>
+        /// Add an specific link to the list of failed links
+        /// </summary>
+        /// <param name="url">String url to be added</param>
+        public void AddFailed(string url){
+            Block();
+            links_failed.Add(url);
+            Release();
+        }
+
         #endregion
 
         #region Assets Management
 
+        /// <summary>
+        /// Checks if two urls are equal, 
+        /// one contained in an <see cref="Asset"/> and the other in an <see cref="URL"/>
+        /// </summary>
+        /// <param name="asset">Asset class containing a url </param>
+        /// <param name="url">URL class</param>
+        /// <returns>True if both URLs are equal</returns>
         public bool AssetsCoincidence(Asset asset, URL url) {
             URL.AbsURL org_url = asset.org_url.url_main;
             URL.AbsURL final_url = asset.final_url.url_main;
@@ -324,6 +410,12 @@ namespace Robot {
             return org == str_url || final == str_url;
             }
 
+        /// <summary>
+        /// Helper private method for <see cref="CheckAsset(URL)"/> and <see cref="UpdateStatus(Asset, UrlStatus)"/>.
+        /// Checks for coincidences in the lists: iprg, saved, and failed.
+        /// </summary>
+        /// <param name="url">The URL tha has to be checked against the three lists</param>
+        /// <returns><see cref="StatusReport"/> object</returns>
         StatusReport IntrCheckAsset(URL url) {
 
             StatusReport report = new StatusReport();
@@ -358,6 +450,11 @@ namespace Robot {
             return report;
             }
 
+        /// <summary>
+        /// Apropiate call for <see cref="IntrCheckAsset(URL)"/>
+        /// </summary>
+        /// <param name="url">URL of the Asset to be checked</param>
+        /// <returns><see cref="StatusReport"/> object, wich contains information abaut the status.</returns>
         public StatusReport CheckAsset(URL url) {
             StatusReport report;
             Block();
@@ -366,7 +463,13 @@ namespace Robot {
             return report;
             }
 
-        public bool AssetStatus(Asset asset, UrlStatus new_status) {
+        /// <summary>
+        /// Updates the status of an Asset, moving it from one list to another.
+        /// </summary>
+        /// <param name="asset">Asset to be updated</param>
+        /// <param name="new_status">New status to be assigned</param>
+        /// <returns>False if the Asset already has the new status. True if new status assigned.</returns>
+        public bool UpdateStatus(Asset asset, UrlStatus new_status) {
             Block();
 
             StatusReport report;
@@ -416,61 +519,104 @@ namespace Robot {
         #endregion
 
         #region Properties
+
+        ///<summary> 
+        ///Number of workers scaning pages at the same time. 
+        ///</summary>
         public int WorkerCount {
             get { return worker_count; }
             set { worker_count = value; }
             }
 
+        /// <summary>
+        /// List of <b>Original Links</b> to be scanned.
+        /// </summary>
         public List<string> OrgLinks {
             get { return org_links; }
             set { org_links = value; }
             }
 
+        /// <summary>
+        /// Navigation direcction in url tree.
+        /// <seealso cref="Robot.NavDirection"/>
+        /// </summary>
         public int IntNavDirection {
             get { return (int) nav_direction; }
             set { nav_direction = (NavDirection) value; }
 
             }
 
+        /// <summary>
+        /// Horizontal navigation enabled
+        /// </summary>
+        /// <remarks>
+        /// Horizontal navigation determines wether pages can be scanned
+        /// in the same folder that a original link. 
+        /// </remarks>
         public bool HNav {
             get { return !hnav; }
             set { hnav = !value; }
             }
 
+        /// <summary>
+        /// Max levels in tree on external links
+        /// </summary>
         public int MaxExt {
             get { return max_ext; }
             set { max_ext = value; }
             }
 
+        /// <summary>
+        /// Max levels in tree on internal links
+        /// </summary>
         public int MaxInt {
             get { return max_int; }
             set { max_int = value; }
             }
 
+        /// <summary>
+        /// Regex rules determined by the user, used for validating links.
+        /// </summary>
         public List<string> LinksRegex {
             get { return links_regex; }
             set { links_regex = value; }
             }
 
+        /// <summary>
+        /// <i>Accept Lang</i> header in HTML request
+        /// </summary>
         public string AcceptLang {
             get { return accept_lang; }
             set { accept_lang = value; }
             }
 
+        /// <summary>
+        /// <i>User Agent</i> sended in HTML request
+        /// </summary>
         public string UserAgent {
             get { return user_agent; }
             set { user_agent = value; }
             }
 
+        /// <summary>
+        /// Max size of an HTML document that the program can download
+        /// </summary>
         public int MaxSizeHtml {
             get { return max_size_html / 1000; }
             set { max_size_html = value * 1000; }
             }
+
+        /// <summary>
+        /// Max time waiting for a server response
+        /// </summary>
         public int TimeoutHtml {
             get { return timeout_html / 1000; }
             set { timeout_html = value * 1000; }
             }
 
+        /// <summary>
+        /// Folder where dociments are being saved
+        /// </summary>
         public string SaveFolder {
             get { return save_folder; }
             set {
@@ -482,6 +628,9 @@ namespace Robot {
                 }
             }
 
+        /// <summary>
+        /// Max retries for saving a file
+        /// </summary>
         public int FsRetry {
             get { return fs_retry; }
             set { fs_retry = value; }
@@ -489,13 +638,11 @@ namespace Robot {
 
         #endregion
 
-        public void AddFailed(string url) {
-            Block();
-            links_failed.Add(url);
-            Release();
-            }
 
-        public State status {
+        /// <summary>
+        /// State of the whole program process. Gets and sets an <see cref="State"/> object.
+        /// </summary>
+        public State Status {
             get {
                 return intr_status;
                 }
@@ -509,6 +656,11 @@ namespace Robot {
                 }
             }
 
+        /// <summary>
+        /// Increment used for renaming files with the same name.
+        /// </summary>
+        /// <param name="url">Original url of the file</param>
+        /// <returns>The number to be added at the end of the file name.</returns>
         public int GetIncrement(string url) {
             Block();
             foreach(IncrementCount ic in file_incr) {
@@ -523,6 +675,9 @@ namespace Robot {
             return 1;
             }
 
+        /// <summary>
+        /// Resets all the data of contained in <see cref="MainData"/>
+        /// </summary>
         public void Reset() {
             Block();
 
@@ -540,10 +695,18 @@ namespace Robot {
             Release();
             }
 
+        /// <summary>
+        /// No Idea
+        /// </summary>
+        /// <param name="data"></param>
         public void Log(string data) {
             //Debug.WriteLine(data);
             }
 
+        /// <summary>
+        /// No Idea
+        /// </summary>
+        /// <param name="data"></param>
         public void Log2(string data) {
             Debug.WriteLine(data);
             }

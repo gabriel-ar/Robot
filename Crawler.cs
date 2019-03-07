@@ -153,7 +153,7 @@ namespace Robot {
                         string final_link = link_page.PathFromRelative(page.final_url);
                         node.SetAttributeValue("href", final_link);
 
-                        data.LinkStatus(link_page, UrlStatus.Todo);
+                        data.UpdateStatus(link_page, UrlStatus.ToDo);
                         break;
 
                     case Result.IsAsset:
@@ -161,7 +161,7 @@ namespace Robot {
                         break;
 
                     case Result.Fail:
-                        data.LinkStatus(link_page, UrlStatus.Failed);
+                        data.UpdateStatus(link_page, UrlStatus.Failed);
                         break;
 
                     }
@@ -287,7 +287,7 @@ namespace Robot {
 
                 if(asset.result == Result.Ok || asset.result == Result.Exists) {
                     if(asset.result == Result.Ok) {
-                        data.AssetStatus(asset, UrlStatus.Saved);
+                        data.UpdateStatus(asset, UrlStatus.Saved);
 
                         if(type == Type.css)
                             css_todo.Add(asset);
@@ -296,7 +296,7 @@ namespace Robot {
                     return asset.final_url.RelativeTo(rel).org_str;
 
                     } else if(asset.result == Result.Fail) {
-                    data.AssetStatus(asset, UrlStatus.Failed);
+                    data.UpdateStatus(asset, UrlStatus.Failed);
                     return null;
                     }
 
@@ -306,9 +306,9 @@ namespace Robot {
 
         void Save() {
             if(page.SaveFile(doc.DocumentNode.OuterHtml))
-                data.LinkStatus(page, UrlStatus.Saved);
+                data.UpdateStatus(page, UrlStatus.Saved);
             else
-                data.LinkStatus(page, UrlStatus.Failed);
+                data.UpdateStatus(page, UrlStatus.Failed);
 
             }
         }
